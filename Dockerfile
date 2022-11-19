@@ -11,8 +11,6 @@ RUN go build -o ./microservice-uporabniki microservice-uporabniki
 
 
 FROM golang:1.19-alpine
-COPY .env /.env
-COPY .env /go
 COPY --from=build /app/microservice-uporabniki /microservice-uporabniki
 EXPOSE 8080
 CMD ["/microservice-uporabniki"]
