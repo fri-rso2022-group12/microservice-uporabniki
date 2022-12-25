@@ -2,6 +2,7 @@ package initializers
 
 import (
 	"github.com/hashicorp/consul/api"
+	"log"
 	"os"
 )
 
@@ -13,7 +14,7 @@ func InitializeConsul() {
 	var err error
 	ConsulClient, err = api.NewClient(&api.Config{Address: os.Getenv("CONSUL_SERVER")})
 	if err != nil {
-		panic(err)
+		log.Println("Consul error", err)
 	}
 	ConsulKV = ConsulClient.KV()
 }

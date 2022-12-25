@@ -5,6 +5,7 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 	"microservice-uporabniki/controllers"
 	docs "microservice-uporabniki/docs"
 	"microservice-uporabniki/initializers"
@@ -21,6 +22,9 @@ func init() {
 func main() {
 	r := gin.Default()
 	r.Use(middlewares.MaintenanceMode())
+	p := ginprometheus.NewPrometheus("gin")
+	p.Use(r)
+
 	docs.SwaggerInfo.BasePath = ""
 
 	health := healthcheck.NewHandler()

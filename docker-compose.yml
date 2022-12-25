@@ -5,6 +5,8 @@ services:
             dockerfile: Dockerfile.dev
             context: .
             target: dev
+        expose:
+            -   80
         ports:
             -   "80:8080"
         volumes:
@@ -34,6 +36,14 @@ services:
             - "8600:8600/tcp"
             - "8600:8600/udp"
         command: "agent -dev"
+
+    prometheus:
+        image: prom/prometheus:v2.30.3
+        ports:
+            - 9000:9090
+        volumes:
+            - ./prometheus:/etc/prometheus
+        command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
 
 volumes:
     mysql:
