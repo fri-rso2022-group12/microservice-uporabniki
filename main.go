@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/heptiolabs/healthcheck"
 	swaggerfiles "github.com/swaggo/files"
@@ -21,6 +22,14 @@ func init() {
 
 func main() {
 	r := gin.Default()
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"*"},
+		AllowHeaders:     []string{"Origin"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 	r.Use(middlewares.MaintenanceMode())
 	p := ginprometheus.NewPrometheus("gin")
 	p.Use(r)
