@@ -3,9 +3,10 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/heptiolabs/healthcheck"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	gin_healthcheck "github.com/tavsec/gin-healthcheck"
+	"github.com/tavsec/gin-healthcheck/checks"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 	"microservice-uporabniki/controllers"
 	docs "microservice-uporabniki/docs"
@@ -36,11 +37,7 @@ func main() {
 
 	docs.SwaggerInfo.BasePath = ""
 
-	health := healthcheck.NewHandler()
-	health.AddLivenessCheck("goroutine-threshold", healthcheck.GoroutineCountCheck(100))
-	health.AddReadinessCheck(
-		"database_check",
-		healthcheck.DatabasePingCheck(initializers.GetDb(), 100*time.Millisecond))
+	gin_healthcheck.New(r, gin_healthcheck.DefaultConfig(), []checks.Check{checks.SqlCheck{Sql: initializers.GetDb()}})
 
 	r.POST("/users", controllers.UsersCreate)
 	r.GET("/users", controllers.UsersIndex)
@@ -50,6 +47,5 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
-	r.GET("/healthz", controllers.Health)
 	r.Run()
 }
