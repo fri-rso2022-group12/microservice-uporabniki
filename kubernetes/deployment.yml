@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: rso-tc-users-service
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: users-service
+    template:
+        metadata:
+            labels:
+                app: users-service
+        spec:
+            containers:
+                - image: tavsec/rso-microservice-uporabniki:latest
+                  name: users-service
+                  env:
+                      - name: DB_PORT
+                        value: "3306"
+                      - name: MYSQL_DATABASE
+                        valueFrom:
+                            secretKeyRef:
+                                name: db-user-pass
+                                key: database
+                      - name: MYSQL_USER
+                        valueFrom:
+                            secretKeyRef:
+                                name: db-user-pass
+                                key: username
+                      - name: MYSQL_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: db-user-pass
+                                key: password
+                      - name: DB_HOST
+                        valueFrom:
+                            secretKeyRef:
+                                name: db-user-pass
+                                key: database-url
+                  ports:
+                      - containerPort: 8080
+                        name: server
+                        protocol: TCP
+                  livenessProbe:
+                      httpGet:
+                          path: /healthz
+                          port: 8080
+                      initialDelaySeconds: 30
+                      periodSeconds: 10
+                  readinessProbe:
+                      httpGet:
+                          path: /healthz
+                          port: 8080
+                      initialDelaySeconds: 30
+                      periodSeconds: 10
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+    name: rso-tc-users-service
+spec:
+    type: LoadBalancer
+    ports:
+        - port: 8080
+          protocol: TCP
+          targetPort: server
+    selector:
+        app: users-service
