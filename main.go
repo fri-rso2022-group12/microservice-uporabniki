@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"flag"
+	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
@@ -8,10 +11,16 @@ import (
 	gin_healthcheck "github.com/tavsec/gin-healthcheck"
 	"github.com/tavsec/gin-healthcheck/checks"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
+	"google.golang.org/grpc"
+	"log"
 	"microservice-uporabniki/controllers"
 	docs "microservice-uporabniki/docs"
 	"microservice-uporabniki/initializers"
 	"microservice-uporabniki/middlewares"
+	"microservice-uporabniki/models"
+	pb "microservice-uporabniki/proto/users"
+	"net"
+	"sync"
 	"time"
 )
 
@@ -19,6 +28,21 @@ func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToMysql()
 	initializers.InitializeConsul()
+}
+
+var (
+	grpcPort = flag.Int("grpc-port", 50051, "The gRPC server port")
+)
+
+type server struct {
+	pb.UnimplementedRouteGuideServer
+}
+
+func (s *server) CreateUser(ctx context.Context, in *pb.UserRequest) (*pb.UserReply, error) {
+	user := models.User{Name: in.GetName(), Email: in.GetEmail()}
+
+	initializers.DB.Create(&user)
+	return &pb.UserReply{Name: in.Name, Email: in.Email}, nil
 }
 
 func main() {
@@ -47,5 +71,26 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
-	r.Run()
+	// gRPC
+	flag.Parse()
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *grpcPort))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterRouteGuideServer(s, &server{})
+	log.Printf("server listening at %v", lis.Addr())
+
+	wg := new(sync.WaitGroup)
+	wg.Add(2)
+	go func() {
+		s.Serve(lis)
+		wg.Done()
+	}()
+	go func() {
+		go r.Run()
+		wg.Done()
+	}()
+
+	wg.Wait()
 }

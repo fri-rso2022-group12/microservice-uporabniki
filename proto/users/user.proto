@@ -1,0 +1,18 @@
+syntax = "proto3";
+option go_package = "./users";
+
+
+// Interface exported by the server.
+service RouteGuide {
+    rpc CreateUser(UserRequest) returns (UserReply) {}
+}
+
+message UserRequest {
+    string name = 1;
+    string email = 2;
+}
+
+message UserReply {
+    string name = 1;
+    string email = 2;
+}
