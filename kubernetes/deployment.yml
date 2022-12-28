@@ -38,6 +38,11 @@ spec:
                             secretKeyRef:
                                 name: db-user-pass
                                 key: database-url
+                      - name: CONSUL_SERVER
+                        valueFrom:
+                            secretKeyRef:
+                                name: consul
+                                key: consul-server
                   ports:
                       - containerPort: 8080
                         name: server
