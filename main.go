@@ -56,20 +56,28 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 	r.Use(middlewares.MaintenanceMode())
+
 	p := ginprometheus.NewPrometheus("gin")
-	p.Use(r)
+	p.MetricsPath = "/users-service/metrics"
 
-	docs.SwaggerInfo.BasePath = ""
+	serviceRoutes := r.Group("/users-service")
+	{
+		p.Use(r)
 
-	gin_healthcheck.New(r, gin_healthcheck.DefaultConfig(), []checks.Check{checks.SqlCheck{Sql: initializers.GetDb()}})
+		docs.SwaggerInfo.BasePath = ""
 
-	r.POST("/users", controllers.UsersCreate)
-	r.GET("/users", controllers.UsersIndex)
-	r.GET("/users/:id", controllers.UsersShow)
-	r.PUT("/users/:id", controllers.UsersUpdate)
-	r.DELETE("/users/:id", controllers.UsersDelete)
+		serviceRoutes.POST("/users", controllers.UsersCreate)
+		serviceRoutes.GET("/users", controllers.UsersIndex)
+		serviceRoutes.GET("/users/:id", controllers.UsersShow)
+		serviceRoutes.PUT("/users/:id", controllers.UsersUpdate)
+		serviceRoutes.DELETE("/users/:id", controllers.UsersDelete)
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+		serviceRoutes.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	}
+
+	config := gin_healthcheck.DefaultConfig()
+	config.HealthPath = "/users-service/healthz"
+	gin_healthcheck.New(r, config, []checks.Check{checks.SqlCheck{Sql: initializers.GetDb()}})
 
 	// gRPC
 	flag.Parse()
