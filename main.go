@@ -64,7 +64,7 @@ func main() {
 	{
 		p.Use(r)
 
-		docs.SwaggerInfo.BasePath = ""
+		docs.SwaggerInfo.BasePath = "/users-service"
 
 		serviceRoutes.POST("/users", controllers.UsersCreate)
 		serviceRoutes.GET("/users", controllers.UsersIndex)
